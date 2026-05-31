@@ -46,3 +46,9 @@ app.*.map.json
 
 # dotenv
 .env
+
+# AI Agents
+.agent/
+.agents/
+.claude/
+.gemini/
