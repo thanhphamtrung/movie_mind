@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/watchlist_item.dart';
+import 'package:go_router/go_router.dart';
 
 class WatchlistPage extends StatefulWidget {
   const WatchlistPage({super.key});
@@ -98,7 +99,7 @@ class _WatchlistPageState extends State<WatchlistPage> {
                 children: [
                   TextButton.icon(
                     onPressed: () {
-                      Navigator.pop(context);
+                      context.pop();
                       _launchYoutube(youtubeId);
                     },
                     icon: const Icon(Icons.open_in_new, color: Colors.amber, size: 16),
@@ -108,7 +109,7 @@ class _WatchlistPageState extends State<WatchlistPage> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () => context.pop(),
                     child: const Text('Đóng', style: TextStyle(color: Colors.white, fontSize: 13)),
                   ),
                 ],

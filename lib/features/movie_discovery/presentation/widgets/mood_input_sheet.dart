@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import 'package:go_router/go_router.dart';
 
 class MoodInputSheet extends StatefulWidget {
   final Function(String) onSubmitted;
@@ -143,7 +144,7 @@ class _MoodInputSheetState extends State<MoodInputSheet> {
                 ),
                 onPressed: () {
                   if (_controller.text.trim().isNotEmpty) {
-                    Navigator.pop(context);
+                    context.pop();
                     widget.onSubmitted(_controller.text.trim());
                   }
                 },

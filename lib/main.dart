@@ -4,7 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/di/injection.dart' as di;
 import 'core/theme/app_theme.dart';
 import 'features/movie_discovery/presentation/bloc/movie_discovery_cubit.dart';
-import 'features/movie_discovery/presentation/pages/movie_swipe_page.dart';
+import 'core/router/app_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,11 +29,11 @@ class MovieMindApp extends StatelessWidget {
           create: (_) => di.sl<MovieDiscoveryCubit>(),
         ),
       ],
-      child: MaterialApp(
+      child: MaterialApp.router(
         title: 'MovieMind - Mood-based Movie Discovery',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.darkTheme,
-        home: const MovieSwipePage(),
+        routerConfig: appRouter,
       ),
     );
   }

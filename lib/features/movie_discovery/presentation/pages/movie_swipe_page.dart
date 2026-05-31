@@ -12,8 +12,7 @@ import '../bloc/movie_discovery_cubit.dart';
 import '../bloc/movie_discovery_state.dart';
 import '../widgets/mood_input_sheet.dart';
 
-// Import watchlist page and save usecase to enable cross-feature integration
-import '../../../watchlist/presentation/pages/watchlist_page.dart';
+import 'package:go_router/go_router.dart';
 
 class MovieSwipePage extends StatefulWidget {
   const MovieSwipePage({super.key});
@@ -121,7 +120,7 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
                 children: [
                   TextButton.icon(
                     onPressed: () {
-                      Navigator.pop(context);
+                      context.pop();
                       _launchYoutube(youtubeId);
                     },
                     icon: const Icon(Icons.open_in_new, color: Colors.amber, size: 16),
@@ -131,7 +130,7 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () => context.pop(),
                     child: const Text('Đóng', style: TextStyle(color: Colors.white, fontSize: 13)),
                   ),
                 ],
@@ -219,24 +218,7 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
                               ),
                             ],
                           ),
-                          IconButton(
-                            style: IconButton.styleFrom(
-                              backgroundColor: AppColors.surfaceElevated.withValues(alpha: 0.5),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                side: const BorderSide(color: AppColors.glassBorder),
-                              ),
-                            ),
-                            icon: const Icon(Icons.bookmark_outline, color: Colors.white),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const WatchlistPage(),
-                                ),
-                              );
-                            },
-                          ),
+
                         ],
                       ),
                     ),
@@ -399,12 +381,7 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
                   label: 'Xem',
                   textColor: AppColors.accent,
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const WatchlistPage(),
-                      ),
-                    );
+                    context.go('/watchlist');
                   },
                 ),
                 backgroundColor: AppColors.success,
