@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Movie Mind - Immersive Prototype</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="./theme_1.css">
+    <style>
+        .mobile-container {
+            width: 100%;
+            max-width: 414px;
+            height: 100vh;
+            max-height: 896px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+            background-color: #050505;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        }
+        @media (min-width: 415px) {
+            body {
+                background-color: #050505 !important;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+            }
+            .mobile-container {
+                height: 850px;
+                border-radius: 40px;
+                border: 8px solid #1f2128;
+            }
+        }
+        
+        .hud-gradient {
+            background: linear-gradient(135deg, rgba(255,126,179,0.15) 0%, rgba(138,43,226,0.15) 100%);
+        }
+        
+        @keyframes scanline {
+            0% { transform: translateY(-100%); opacity: 0; }
+            50% { opacity: 0.5; }
+            100% { transform: translateY(100%); opacity: 0; }
+        }
+        .animate-scanline {
+            animation: scanline 3s linear infinite;
+        }
+        
+        @keyframes floating-card {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(0.5deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+        .animate-floating-card {
+            animation: floating-card 6s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+
+<div class="mobile-container relative">
+    
+    <!-- Immersive Blurred Background -->
+    <div class="absolute inset-0 z-0 overflow-hidden">
+        <img src="https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1000&auto=format&fit=crop" 
+             alt="Background Blur" 
+             class="w-full h-full object-cover opacity-40 blur-2xl transform scale-110" />
+        <div class="absolute inset-0 bg-gradient-to-b from-[#050505]/90 via-[#050505]/50 to-[#0B0E14]"></div>
+        
+        <!-- Ambient Color Mix -->
+        <div class="absolute top-[10%] left-[-20%] w-[80%] h-[50%] bg-[#8A2BE2] opacity-40 blur-[120px] mix-blend-screen pointer-events-none"></div>
+        <div class="absolute bottom-[20%] right-[-20%] w-[70%] h-[60%] bg-[#FF7EB3] opacity-30 blur-[120px] mix-blend-screen pointer-events-none"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="relative flex items-center justify-between p-6 z-20 shrink-0">
+        <div class="w-[72px]"></div> <!-- Spacer -->
+        
+        <!-- Centered Logo -->
+        <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <h1 class="brand-font text-2xl font-bold text-white tracking-wider drop-shadow-lg">MovieMind</h1>
+        </div>
+
+        <button class="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-white backdrop-blur-md hover:bg-white/10 transition">
+            <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
+        </button>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col items-center px-4 pb-2 relative z-10 w-full">
+        
+        <!-- User Prompt Pill -->
+        <div class="w-full flex justify-center mb-6 z-20">
+            <div class="backdrop-blur-xl bg-black/40 border border-white/10 rounded-full py-2 px-5 flex items-center gap-2 max-w-[90%] shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+                <div class="w-2 h-2 rounded-full bg-[#FF7EB3] animate-pulse"></div>
+                <p class="text-[13px] text-gray-200 font-medium truncate">
+                    "Phim trinh thám hại não, kết thúc ấm áp"
+                </p>
+            </div>
+        </div>
+
+        <!-- 3D Card Stack Area -->
+        <div class="relative w-full h-[520px] flex items-center justify-center mt-2 perspective-1000">
+            
+            <!-- Stacked Background Card -->
+            <div class="absolute w-[82%] h-[480px] rounded-[2.5rem] bg-gray-900 border border-white/5 transform -translate-y-6 scale-90 opacity-40 blur-[2px] shadow-2xl overflow-hidden transition-all duration-500">
+                <img src="https://images.unsplash.com/photo-1440404653325-ab127d49abc1?q=80&w=1000&auto=format&fit=crop" class="w-full h-full object-cover opacity-50" />
+            </div>
+
+            <!-- Stacked Middle Card -->
+            <div class="absolute w-[88%] h-[500px] rounded-[2.5rem] bg-gray-800 border border-white/10 transform -translate-y-3 scale-95 opacity-70 blur-[1px] shadow-2xl overflow-hidden transition-all duration-500">
+                <img src="https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1000&auto=format&fit=crop" class="w-full h-full object-cover opacity-60" />
+            </div>
+
+            <!-- Foreground Main Card -->
+            <div class="absolute w-full max-w-[350px] h-[520px] rounded-[2.5rem] overflow-hidden z-20 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/15 animate-floating-card group">
+                <!-- Movie Poster -->
+                <img src="https://images.unsplash.com/photo-1618331835717-801e976710b2?q=80&w=1000&auto=format&fit=crop" 
+                     alt="The Last Signal" 
+                     class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                
+                <!-- Dynamic Lighting Overlays -->
+                <div class="absolute inset-0 bg-gradient-to-t from-black via-[#0B0E14]/60 to-transparent opacity-90"></div>
+                <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent opacity-60"></div>
+                
+                <!-- Match Score Badge -->
+                <div class="absolute top-5 right-5 backdrop-blur-xl bg-black/50 border border-[#8A2BE2]/50 rounded-2xl px-3 py-1.5 flex items-center gap-1.5 shadow-[0_0_20px_rgba(138,43,226,0.3)]">
+                    <i data-lucide="zap" class="w-3.5 h-3.5 text-[#D8B4FE] fill-[#D8B4FE] animate-pulse"></i>
+                    <span class="text-white text-[11px] font-bold tracking-widest uppercase">98% Phù hợp</span>
+                </div>
+
+                <!-- Provider Badge -->
+                <div class="absolute top-5 left-5 backdrop-blur-xl bg-white/10 rounded-xl px-3 py-1.5 flex items-center shadow-lg border border-white/10">
+                    <span class="text-red-500 font-bold text-[11px] tracking-widest uppercase">Netflix</span>
+                </div>
+
+                <!-- AI HUD Analysis Panel -->
+                <div class="absolute bottom-32 left-0 w-full px-5 z-30">
+                    <div class="hud-gradient backdrop-blur-xl border border-white/10 rounded-[1.5rem] p-3.5 flex gap-3 items-start relative overflow-hidden shadow-2xl">
+                        <!-- Scanning effect line -->
+                        <div class="absolute left-0 top-0 w-full h-[2px] bg-white/40 animate-scanline"></div>
+                        <!-- Accent line -->
+                        <div class="absolute left-0 top-0 w-1 h-full bg-[#FF7EB3]"></div>
+                        
+                        <div class="w-8 h-8 rounded-full bg-black/40 border border-[#FF7EB3]/30 flex items-center justify-center shrink-0">
+                            <i data-lucide="cpu" class="w-4 h-4 text-[#FF7EB3]"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-[#FF7EB3] font-bold tracking-widest mb-1 uppercase">AI Phân Tích <span class="animate-pulse">_</span></p>
+                            <p class="text-[13px] text-gray-100 leading-snug font-light">
+                                Cốt truyện không gian <b class="font-semibold text-white">hại não</b> kết hợp với <b class="font-semibold text-white">kết thúc cảm động</b> hoàn toàn khớp với tâm trạng hiện tại của bạn.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Movie Details -->
+                <div class="absolute bottom-0 left-0 w-full p-6 flex flex-col gap-2 z-20">
+                    <h2 class="brand-font text-[2rem] font-black text-white tracking-tight leading-none drop-shadow-2xl">The Last Signal</h2>
+                    
+                    <div class="flex items-center gap-3 text-[13px] text-gray-300 font-medium tracking-wide">
+                        <span>2024</span>
+                        <span class="w-1 h-1 rounded-full bg-gray-500"></span>
+                        <span>2h 14m</span>
+                        <span class="w-1 h-1 rounded-full bg-gray-500"></span>
+                        <span>Viễn tưởng</span>
+                    </div>
+
+                    <!-- Tags -->
+                    <div class="flex flex-wrap gap-2 mt-2">
+                        <span class="px-3 py-1 text-[10px] uppercase tracking-widest font-bold rounded-lg bg-white/10 text-white backdrop-blur-md border border-white/15">Hại não</span>
+                        <span class="px-3 py-1 text-[10px] uppercase tracking-widest font-bold rounded-lg bg-[#FF7EB3]/20 text-[#FF7EB3] backdrop-blur-md border border-[#FF7EB3]/30">Cảm động</span>
+                        <span class="px-3 py-1 text-[10px] uppercase tracking-widest font-bold rounded-lg bg-white/10 text-white backdrop-blur-md border border-white/15">Bí ẩn</span>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- Floating Action Buttons -->
+        <div class="w-full flex items-center justify-center gap-6 mt-8 z-20 px-8">
+            <!-- Reject / Pass -->
+            <button class="w-16 h-16 rounded-full backdrop-blur-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 hover:border-white/30 transition-all hover:scale-110 active:scale-95 flex items-center justify-center shadow-xl">
+                <i data-lucide="x" class="w-7 h-7 stroke-[2.5]"></i>
+            </button>
+            
+            <!-- Super Like / Save -->
+            <button class="w-12 h-12 rounded-full backdrop-blur-xl bg-white/5 border border-white/10 text-[#8A2BE2] hover:text-white hover:bg-[#8A2BE2]/50 transition-all hover:scale-110 active:scale-95 flex items-center justify-center shadow-xl">
+                <i data-lucide="bookmark" class="w-5 h-5 stroke-[2.5]"></i>
+            </button>
+
+            <!-- Like / Accept -->
+            <button class="w-20 h-20 rounded-full bg-gradient-to-tr from-[#FF7EB3] to-[#8A2BE2] shadow-[0_0_40px_rgba(255,126,179,0.5)] text-white transition-all hover:scale-110 hover:shadow-[0_0_60px_rgba(255,126,179,0.8)] active:scale-95 flex items-center justify-center relative overflow-hidden group border border-white/20">
+                <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                <i data-lucide="heart" class="w-9 h-9 stroke-[2.5] fill-white"></i>
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="w-full bg-[#050505]/90 backdrop-blur-3xl border-t border-white/5 flex items-center justify-around px-2 pt-5 pb-8 z-30 shrink-0">
+        <button class="flex flex-col items-center gap-1.5 w-[70px] text-white group">
+            <div class="relative">
+                <i data-lucide="compass" class="w-6 h-6 stroke-[2] text-[#FF7EB3] glow-icon relative z-10"></i>
+                <div class="absolute inset-0 bg-[#FF7EB3] blur-md opacity-40"></div>
+            </div>
+            <span class="text-[10px] font-semibold tracking-wide">Khám phá</span>
+        </button>
+
+        <button class="flex flex-col items-center gap-1.5 w-[70px] text-gray-500 hover:text-gray-300 transition group">
+            <i data-lucide="message-circle" class="w-6 h-6 stroke-[2] group-hover:scale-110 transition-transform"></i>
+            <span class="text-[10px] font-medium tracking-wide">Trò chuyện</span>
+        </button>
+
+        <button class="flex flex-col items-center gap-1.5 w-[70px] text-gray-500 hover:text-gray-300 transition group">
+            <i data-lucide="bookmark" class="w-6 h-6 stroke-[2] group-hover:scale-110 transition-transform"></i>
+            <span class="text-[10px] font-medium tracking-wide">Danh sách</span>
+        </button>
+
+        <button class="flex flex-col items-center gap-1.5 w-[70px] text-gray-500 hover:text-gray-300 transition group">
+            <i data-lucide="user" class="w-6 h-6 stroke-[2] group-hover:scale-110 transition-transform"></i>
+            <span class="text-[10px] font-medium tracking-wide">Hồ sơ</span>
+        </button>
+    </nav>
+</div>
+
+<script>
+    lucide.createIcons();
+</script>
+</body>
+</html>

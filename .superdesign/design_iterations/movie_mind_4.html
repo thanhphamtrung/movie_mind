@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Movie Mind - Filters</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="./theme_1.css">
+    <style>
+        .mobile-container {
+            width: 100%;
+            max-width: 414px;
+            height: 100vh;
+            max-height: 896px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+            background-color: var(--background);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        }
+        @media (min-width: 415px) {
+            body {
+                background-color: #050505 !important;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100vh;
+            }
+            .mobile-container {
+                height: 850px;
+                border-radius: 40px;
+                border: 8px solid #1f2128;
+            }
+        }
+        
+        @keyframes slide-up {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .animate-slide-up {
+            animation: slide-up 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+        
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+<body>
+
+<div class="mobile-container relative">
+    
+    <!-- BACKGROUND APP CONTENT (From screen 3) -->
+    <div class="absolute inset-0 flex flex-col z-0">
+        <!-- Background Ambient Glows -->
+        <div class="absolute top-[20%] left-[10%] w-[60%] h-[30%] bg-[#FF7EB3] opacity-10 blur-[100px] rounded-full pointer-events-none"></div>
+        <div class="absolute bottom-[30%] right-[10%] w-[50%] h-[40%] bg-[#8A2BE2] opacity-15 blur-[100px] rounded-full pointer-events-none"></div>
+
+        <!-- Header -->
+        <header class="relative flex items-center justify-between p-6 shrink-0">
+            <div class="w-[72px]"></div> <!-- Spacer to balance layout -->
+            
+            <!-- Centered Logo -->
+            <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                <h1 class="brand-font text-2xl font-semibold text-gradient tracking-wide">MovieMind</h1>
+            </div>
+
+            <!-- Filter Button -->
+            <button class="flex items-center gap-1.5 text-xs font-medium text-gray-300 hover:text-white bg-white/5 border border-white/10 px-3 py-1.5 rounded-full transition shrink-0 shadow-sm backdrop-blur-md">
+                <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i> Filters
+            </button>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col justify-center px-6 pb-12 overflow-y-auto no-scrollbar">
+            <div class="flex flex-col items-center text-center">
+                <div class="w-16 h-16 rounded-full glass-panel flex items-center justify-center mb-6 glow-shadow border border-[#FF7EB3]/30">
+                    <i data-lucide="sparkles" class="w-8 h-8 text-[#FF7EB3] glow-icon"></i>
+                </div>
+                <h2 class="brand-font text-3xl font-bold text-white tracking-tight leading-tight mb-3">
+                    Hôm nay bạn cảm thấy thế nào?
+                </h2>
+                <p class="text-gray-400 text-sm font-light mb-10 max-w-[260px] leading-relaxed">
+                    Mô tả tâm trạng của bạn, AI sẽ gợi ý các bộ phim dành riêng cho bạn.
+                </p>
+            </div>
+            
+            <div class="w-full">
+                <div class="glass-panel rounded-3xl p-3 flex flex-col border border-white/10 relative">
+                    <div class="w-full bg-transparent border-none outline-none text-white px-3 py-2 text-[15px] min-h-[80px]"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- BLACK OVERLAY & BOTTOM SHEET -->
+    <div class="absolute inset-0 bg-black/60 z-30 backdrop-blur-sm animate-fade-in flex flex-col justify-end">
+        
+        <!-- Bottom Sheet -->
+        <div class="w-full bg-[#0B0E14]/95 backdrop-blur-2xl rounded-t-[2.5rem] border-t border-white/10 pt-4 pb-8 px-6 animate-slide-up flex flex-col shadow-[0_-20px_50px_rgba(0,0,0,0.8)] relative h-[85%]">
+            
+            <!-- Drag Handle -->
+            <div class="w-12 h-1.5 bg-gray-700 rounded-full mx-auto mb-6 shrink-0"></div>
+
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-8 shrink-0">
+                <div class="w-8 h-8"></div> <!-- Spacer for centering -->
+                <h2 class="brand-font text-2xl font-bold text-white tracking-wide">Bộ lọc</h2>
+                <button class="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Scrollable Content -->
+            <div class="flex-1 overflow-y-auto no-scrollbar pb-6 flex flex-col gap-8">
+                
+                <!-- Format -->
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-widest mb-4">Định dạng</h3>
+                    <div class="flex p-1 bg-white/5 rounded-2xl w-full">
+                        <button class="flex-1 py-2.5 rounded-xl bg-gradient-brand text-white font-medium text-sm shadow-[0_0_15px_rgba(138,43,226,0.3)] transition">
+                            Phim lẻ
+                        </button>
+                        <button class="flex-1 py-2.5 rounded-xl text-gray-400 hover:text-white font-medium text-sm transition">
+                            Phim bộ
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Genres -->
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-widest mb-4">Thể loại</h3>
+                    <div class="flex flex-wrap gap-3">
+                        <button class="px-4 py-2 rounded-xl bg-gradient-brand text-white font-medium text-sm shadow-[0_0_15px_rgba(138,43,226,0.3)] border border-transparent">
+                            Viễn tưởng
+                        </button>
+                        <button class="px-4 py-2 rounded-xl glass-panel text-gray-400 hover:text-white font-medium text-sm border border-white/5 transition">
+                            Hành động
+                        </button>
+                        <button class="px-4 py-2 rounded-xl bg-gradient-brand text-white font-medium text-sm shadow-[0_0_15px_rgba(138,43,226,0.3)] border border-transparent">
+                            Trinh thám
+                        </button>
+                        <button class="px-4 py-2 rounded-xl glass-panel text-gray-400 hover:text-white font-medium text-sm border border-white/5 transition">
+                            Hài hước
+                        </button>
+                        <button class="px-4 py-2 rounded-xl glass-panel text-gray-400 hover:text-white font-medium text-sm border border-white/5 transition">
+                            Tâm lý
+                        </button>
+                        <button class="px-4 py-2 rounded-xl glass-panel text-gray-400 hover:text-white font-medium text-sm border border-white/5 transition">
+                            Kinh dị
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Country -->
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-widest mb-4">Quốc gia</h3>
+                    <div class="flex flex-wrap gap-3">
+                        <button class="px-4 py-2 rounded-xl bg-gradient-brand text-white font-medium text-sm shadow-[0_0_15px_rgba(138,43,226,0.3)] border border-transparent">
+                            Mỹ & Anh
+                        </button>
+                        <button class="px-4 py-2 rounded-xl glass-panel text-gray-400 hover:text-white font-medium text-sm border border-white/5 transition">
+                            Hàn Quốc
+                        </button>
+                        <button class="px-4 py-2 rounded-xl glass-panel text-gray-400 hover:text-white font-medium text-sm border border-white/5 transition">
+                            Nhật Bản
+                        </button>
+                        <button class="px-4 py-2 rounded-xl glass-panel text-gray-400 hover:text-white font-medium text-sm border border-white/5 transition">
+                            Pháp
+                        </button>
+                        <button class="px-4 py-2 rounded-xl glass-panel text-gray-400 hover:text-white font-medium text-sm border border-white/5 transition">
+                            Tất cả
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Apply Button -->
+            <div class="pt-4 shrink-0 mt-auto border-t border-white/5">
+                <button class="w-full bg-gradient-brand rounded-full py-4 px-6 text-white font-semibold text-[15px] tracking-wide glow-shadow transition-transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i> Áp dụng bộ lọc
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    lucide.createIcons();
+</script>
+</body>
+</html>
