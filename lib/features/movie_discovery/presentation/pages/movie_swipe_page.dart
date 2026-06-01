@@ -1,5 +1,5 @@
 import 'dart:ui';
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
@@ -10,7 +10,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/movie.dart';
 import '../bloc/movie_discovery_cubit.dart';
 import '../bloc/movie_discovery_state.dart';
-import '../widgets/mood_input_sheet.dart';
+import '../widgets/filter_bottom_sheet.dart';
 
 import 'package:go_router/go_router.dart';
 
@@ -23,25 +23,33 @@ class MovieSwipePage extends StatefulWidget {
 
 class _MovieSwipePageState extends State<MovieSwipePage> {
   final CardSwiperController _swiperController = CardSwiperController();
+  final TextEditingController _moodController = TextEditingController();
   int _currentIndex = 0;
   List<Movie> _currentMovies = [];
+
+  final List<String> _quickMoods = [
+    '🍿 Buổi tối ấm cúng',
+    '🚀 Viễn tưởng kịch tính',
+    '🤯 Hại não',
+    '😂 Cười vỡ bụng',
+  ];
 
   @override
   void dispose() {
     _swiperController.dispose();
+    _moodController.dispose();
     super.dispose();
   }
 
-  void _showMoodSheet() {
-    showModalBottomSheet(
+  void _resetDiscovery() {
+    _moodController.clear();
+    context.read<MovieDiscoveryCubit>().reset();
+  }
+
+  void _showFilterSheet() {
+    showCupertinoModalPopup(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => MoodInputSheet(
-        onSubmitted: (mood) {
-          context.read<MovieDiscoveryCubit>().fetchMoviesForMood(mood);
-        },
-      ),
+      builder: (context) => const FilterBottomSheet(),
     );
   }
 
@@ -59,10 +67,17 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
         await launchUrl(webUri, mode: LaunchMode.externalApplication);
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Không thể mở liên kết YouTube!'),
-              backgroundColor: AppColors.error,
+          showCupertinoDialog(
+            context: context,
+            builder: (context) => CupertinoAlertDialog(
+              title: const Text('Lỗi'),
+              content: const Text('Không thể mở liên kết YouTube!'),
+              actions: [
+                CupertinoDialogAction(
+                  child: const Text('OK'),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
             ),
           );
         }
@@ -70,26 +85,32 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
     }
   }
 
+  void _showErrorDialog(String message) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Lỗi'),
+        content: Text(message),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('OK'),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _playTrailer(String? youtubeId) {
     if (youtubeId == null || youtubeId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Không tìm thấy trailer cho phim này!'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      _showErrorDialog('Không tìm thấy trailer cho phim này!');
       return;
     }
 
     final String parsedId = YoutubePlayer.convertUrlToId(youtubeId) ?? youtubeId;
 
     if (parsedId.length < 10 || parsedId.length > 12 || parsedId.contains(' ')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('ID Trailer không khả dụng!'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      _showErrorDialog('ID Trailer không khả dụng!');
       return;
     }
 
@@ -101,42 +122,56 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
       ),
     );
 
-    showDialog(
+    showCupertinoDialog(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.black,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            YoutubePlayer(
-              controller: playerController,
-              showVideoProgressIndicator: true,
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  TextButton.icon(
-                    onPressed: () {
-                      context.pop();
-                      _launchYoutube(youtubeId);
-                    },
-                    icon: const Icon(Icons.open_in_new, color: Colors.amber, size: 16),
-                    label: const Text(
-                      'Xem trên YouTube ↗',
-                      style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () => context.pop(),
-                    child: const Text('Đóng', style: TextStyle(color: Colors.white, fontSize: 13)),
-                  ),
-                ],
+      barrierDismissible: true,
+      builder: (context) => Center(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: CupertinoColors.black,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              YoutubePlayer(
+                controller: playerController,
+                showVideoProgressIndicator: true,
               ),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () {
+                        context.pop();
+                        _launchYoutube(youtubeId);
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(CupertinoIcons.arrow_up_right_square, color: CupertinoColors.systemYellow, size: 16),
+                          SizedBox(width: 4),
+                          Text(
+                            'Xem trên YouTube',
+                            style: TextStyle(color: CupertinoColors.systemYellow, fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () => context.pop(),
+                      child: const Text('Đóng', style: TextStyle(color: CupertinoColors.white, fontSize: 13)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -144,8 +179,9 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: BlocConsumer<MovieDiscoveryCubit, MovieDiscoveryState>(
+    return CupertinoPageScaffold(
+      backgroundColor: AppColors.background,
+      child: BlocConsumer<MovieDiscoveryCubit, MovieDiscoveryState>(
         listener: (context, state) {
           if (state is MovieDiscoveryLoaded) {
             setState(() {
@@ -181,7 +217,7 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
                       BackdropFilter(
                         filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                         child: Container(
-                          color: Colors.black.withValues(alpha: 0.65),
+                          color: CupertinoColors.black.withValues(alpha: 0.65),
                         ),
                       ),
                     ],
@@ -200,28 +236,87 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
+                          const SizedBox(width: 72), // Spacer for centering
+                          Text(
+                            'MovieMind',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: -0.5,
+                              foreground: Paint()
+                                ..shader = const LinearGradient(
+                                  colors: [Color(0xFFFF7EB3), Color(0xFF8A2BE2)],
+                                ).createShader(const Rect.fromLTWH(0.0, 0.0, 200.0, 70.0)),
+                            ),
+                          ),
+                          CupertinoButton(
+                            padding: EdgeInsets.zero,
+                            onPressed: _showFilterSheet,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: CupertinoColors.white.withValues(alpha: 0.05),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: AppColors.glassBorder),
+                              ),
+                              child: Row(
+                                children: const [
+                                  Icon(CupertinoIcons.slider_horizontal_3, size: 14, color: AppColors.textSecondary),
+                                  SizedBox(width: 4),
+                                  Text('Filters', style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Mood Prompt Pill
+                    if (state is MovieDiscoveryLoaded)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12, left: 16, right: 16),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: CupertinoColors.black.withValues(alpha: 0.4),
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(color: AppColors.glassBorder.withValues(alpha: 0.5)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: CupertinoColors.black.withValues(alpha: 0.5),
+                                blurRadius: 30,
+                                offset: const Offset(0, 10),
+                              )
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.auto_awesome, color: AppColors.primary, size: 24),
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFFF7EB3),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
                               const SizedBox(width: 8),
-                              Text(
-                                'MovieMind',
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: -0.5,
-                                  foreground: Paint()
-                                    ..shader = const LinearGradient(
-                                      colors: [AppColors.primary, AppColors.secondary],
-                                    ).createShader(const Rect.fromLTWH(0.0, 0.0, 200.0, 70.0)),
+                              Flexible(
+                                child: Text(
+                                  '"${state.moodPrompt}"',
+                                  style: const TextStyle(
+                                    color: CupertinoColors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
                           ),
-
-                        ],
+                        ),
                       ),
-                    ),
 
                     // Main Content / Swiper
                     Expanded(
@@ -242,46 +337,143 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
 
   Widget _buildMainContent(MovieDiscoveryState state) {
     if (state is MovieDiscoveryInitial) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceElevated.withValues(alpha: 0.5),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.glassBorder),
-                ),
-                child: const Icon(Icons.movie_filter_outlined, size: 80, color: AppColors.textSecondary),
+      return SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          children: [
+            // Icon
+            Container(
+              width: 64,
+              height: 64,
+              margin: const EdgeInsets.only(bottom: 24),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceElevated.withValues(alpha: 0.5),
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFFF7EB3).withValues(alpha: 0.3)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x33FF7EB3),
+                    blurRadius: 20,
+                  )
+                ]
               ),
-              const SizedBox(height: 28),
-              const Text(
-                'Khám phá Điện ảnh cùng AI',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              child: const Icon(CupertinoIcons.sparkles, color: Color(0xFFFF7EB3), size: 32),
+            ),
+            
+            // Title
+            const Text(
+              'Hôm nay bạn cảm thấy thế nào?',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, height: 1.2, letterSpacing: -0.5),
+            ),
+            const SizedBox(height: 12),
+            
+            // Subtitle
+            const Text(
+              'Mô tả tâm trạng của bạn, AI sẽ gợi ý các bộ phim dành riêng cho bạn.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.5, fontWeight: FontWeight.w300),
+            ),
+            const SizedBox(height: 40),
+            
+            // Input Area
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceElevated.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: AppColors.glassBorder),
               ),
-              const SizedBox(height: 12),
-              const Text(
-                'Mô tả tâm trạng hôm nay của bạn, AI sẽ chọn lọc những thước phim chuẩn xác nhất cho riêng bạn.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.5),
+              child: Column(
+                children: [
+                  CupertinoTextField(
+                    controller: _moodController,
+                    maxLines: 3,
+                    minLines: 3,
+                    style: const TextStyle(fontSize: 15, color: CupertinoColors.white),
+                    placeholder: 'VD: Tôi muốn xem một phim trinh thám hại não có kết thúc ấm áp...',
+                    placeholderStyle: const TextStyle(color: AppColors.textMuted, fontSize: 15),
+                    decoration: const BoxDecoration(color: CupertinoColors.transparent),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        onPressed: () {},
+                        child: const Icon(CupertinoIcons.mic, color: AppColors.textMuted, size: 20),
+                      ),
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFFF7EB3), Color(0xFF8A2BE2)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          shape: BoxShape.circle,
+                          boxShadow: const [
+                            BoxShadow(color: Color(0x80FF7EB3), blurRadius: 15)
+                          ]
+                        ),
+                        child: CupertinoButton(
+                          padding: EdgeInsets.zero,
+                          onPressed: () {
+                            if (_moodController.text.trim().isNotEmpty) {
+                              context.read<MovieDiscoveryCubit>().fetchMoviesForMood(_moodController.text.trim());
+                            }
+                          },
+                          child: const Icon(CupertinoIcons.arrow_up, color: CupertinoColors.white, size: 20),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(height: 32),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.secondary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                ),
-                onPressed: _showMoodSheet,
-                child: const Text('Nhập Tâm Trạng Ngay', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(height: 40),
+            
+            // Suggestions
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'GỢI Ý',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textMuted, letterSpacing: 1.2),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              alignment: WrapAlignment.start,
+              children: _quickMoods.map((mood) {
+                return GestureDetector(
+                  onTap: () {
+                    _moodController.text = mood.substring(2).trim(); // Skip emoji
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceElevated.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.glassBorder),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(mood.substring(0, 2), style: const TextStyle(fontSize: 18)),
+                        const SizedBox(width: 8),
+                        Text(mood.substring(2).trim(), style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
         ),
       );
     }
@@ -291,7 +483,7 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const CircularProgressIndicator(color: AppColors.primary),
+            const CupertinoActivityIndicator(radius: 16),
             const SizedBox(height: 24),
             Text(
               'AI đang phân tích cảm xúc...',
@@ -314,7 +506,7 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.sentiment_very_dissatisfied, size: 64, color: AppColors.error),
+              const Icon(CupertinoIcons.exclamationmark_circle, size: 64, color: AppColors.error),
               const SizedBox(height: 16),
               Text(
                 state.message,
@@ -322,8 +514,8 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
                 style: const TextStyle(fontSize: 16, color: AppColors.textSecondary),
               ),
               const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _showMoodSheet,
+              CupertinoButton.filled(
+                onPressed: _resetDiscovery,
                 child: const Text('Thử Lại'),
               ),
             ],
@@ -340,7 +532,7 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.check_circle_outline, size: 64, color: AppColors.success),
+                const Icon(CupertinoIcons.check_mark_circled, size: 64, color: AppColors.success),
                 const SizedBox(height: 16),
                 const Text(
                   'Đã xem hết gợi ý!',
@@ -353,10 +545,10 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
                   style: TextStyle(color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: _showMoodSheet,
-                  child: const Text('Tìm Kiếm Mới'),
-                ),
+                CupertinoButton.filled(
+                onPressed: _resetDiscovery,
+                child: const Text('Tìm Kiếm Mới'),
+              ),
               ],
             ),
           ),
@@ -367,6 +559,9 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
         controller: _swiperController,
         cardsCount: _currentMovies.length,
         initialIndex: _currentIndex,
+        numberOfCardsDisplayed: 3,
+        backCardOffset: const Offset(0, 30),
+        scale: 0.9,
         onSwipe: (previousIndex, currentIndex, direction) {
           setState(() {
             _currentIndex = currentIndex ?? _currentIndex + 1;
@@ -374,18 +569,26 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
           if (direction == CardSwiperDirection.right) {
             // Save to Watchlist
             final savedMovie = _currentMovies[previousIndex];
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
+            showCupertinoDialog(
+              context: context,
+              barrierDismissible: true,
+              builder: (context) => CupertinoAlertDialog(
+                title: const Text('Đã lưu'),
                 content: Text('Đã lưu "${savedMovie.title}" vào Watchlist'),
-                action: SnackBarAction(
-                  label: 'Xem',
-                  textColor: AppColors.accent,
-                  onPressed: () {
-                    context.go('/watchlist');
-                  },
-                ),
-                backgroundColor: AppColors.success,
-                duration: const Duration(seconds: 2),
+                actions: [
+                  CupertinoDialogAction(
+                    child: const Text('Xem'),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      context.go('/watchlist');
+                    },
+                  ),
+                  CupertinoDialogAction(
+                    isDefaultAction: true,
+                    child: const Text('Đóng'),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
               ),
             );
           }
@@ -405,18 +608,18 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(40),
         border: Border.all(color: AppColors.glassBorder.withValues(alpha: 0.5), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
+            color: CupertinoColors.black.withValues(alpha: 0.5),
             blurRadius: 20,
             spreadRadius: 2,
           )
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(40),
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -428,108 +631,257 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
               },
               placeholder: (context, url) => const Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
+                child: CupertinoActivityIndicator(),
               ),
               errorWidget: (context, url, error) => Container(
                 color: AppColors.surface,
-                child: const Icon(Icons.movie, size: 80),
+                child: const Icon(CupertinoIcons.film, size: 80),
               ),
             ),
 
-            // Gradient Overlay for text readability
+            // Dynamic Lighting Overlays
             Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  colors: [
+                    CupertinoColors.black,
+                    const Color(0xFF0B0E14).withValues(alpha: 0.6),
+                    CupertinoColors.transparent,
+                  ],
+                  stops: const [0.0, 0.4, 1.0],
+                ),
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.transparent,
-                    Colors.black26,
-                    Colors.black87,
+                    CupertinoColors.black.withValues(alpha: 0.4),
+                    CupertinoColors.transparent,
+                    CupertinoColors.transparent,
                   ],
-                  stops: [0.0, 0.4, 0.9],
+                  stops: const [0.0, 0.3, 1.0],
+                ),
+              ),
+            ),
+            
+            // Match Score Badge
+            Positioned(
+              top: 20,
+              right: 20,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: CupertinoColors.black.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF8A2BE2).withValues(alpha: 0.5)),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x4D8A2BE2),
+                      blurRadius: 20,
+                    )
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(CupertinoIcons.bolt_fill, color: Color(0xFFD8B4FE), size: 14),
+                    SizedBox(width: 6),
+                    Text(
+                      '98% PHÙ HỢP',
+                      style: TextStyle(
+                        color: CupertinoColors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
 
-            // Movie Information
-            Padding(
-              padding: const EdgeInsets.all(20.0),
+            // Provider Badge
+            Positioned(
+              top: 20,
+              left: 20,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: CupertinoColors.white.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: CupertinoColors.white.withValues(alpha: 0.1)),
+                ),
+                child: const Text(
+                  'NETFLIX',
+                  style: TextStyle(
+                    color: CupertinoColors.destructiveRed,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+            ),
+
+            // AI HUD Analysis Panel
+            Positioned(
+              bottom: 120,
+              left: 20,
+              right: 20,
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0x26FF7EB3), Color(0x268A2BE2)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: CupertinoColors.white.withValues(alpha: 0.1)),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x1A000000),
+                      blurRadius: 20,
+                    )
+                  ],
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 4,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFF7EB3),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: CupertinoColors.black.withValues(alpha: 0.4),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: const Color(0xFFFF7EB3).withValues(alpha: 0.3)),
+                      ),
+                      child: const Icon(CupertinoIcons.wand_rays, color: Color(0xFFFF7EB3), size: 16),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'AI PHÂN TÍCH _',
+                            style: TextStyle(
+                              color: Color(0xFFFF7EB3),
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Bộ phim này hoàn toàn khớp với tâm trạng của bạn dựa trên đánh giá sâu sắc về ${movie.genres.take(2).join(', ')}.',
+                            style: const TextStyle(
+                              color: CupertinoColors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w300,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Movie Details
+            Positioned(
+              bottom: 20,
+              left: 20,
+              right: 20,
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.star, color: Colors.amber, size: 14),
-                            const SizedBox(width: 4),
-                            Text(
-                              movie.rating.toStringAsFixed(1),
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        movie.releaseYear,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
                   Text(
                     movie.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: -0.5,
+                      fontSize: 32,
+                      fontWeight: FontWeight.w900,
+                      color: CupertinoColors.white,
+                      letterSpacing: -1,
+                      height: 1.1,
                     ),
                   ),
                   const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Text(
+                        movie.releaseYear,
+                        style: const TextStyle(color: CupertinoColors.white, fontSize: 13, fontWeight: FontWeight.w500),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8),
+                        child: Icon(CupertinoIcons.circle_fill, size: 4, color: CupertinoColors.systemGrey),
+                      ),
+                      const Text(
+                        '2h 14m',
+                        style: TextStyle(color: CupertinoColors.white, fontSize: 13, fontWeight: FontWeight.w500),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8),
+                        child: Icon(CupertinoIcons.circle_fill, size: 4, color: CupertinoColors.systemGrey),
+                      ),
+                      Row(
+                        children: [
+                          const Icon(CupertinoIcons.star_fill, color: CupertinoColors.systemYellow, size: 14),
+                          const SizedBox(width: 4),
+                          Text(
+                            movie.rating.toStringAsFixed(1),
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: CupertinoColors.white),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
                   Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
+                    spacing: 8,
+                    runSpacing: 8,
                     children: movie.genres.map((genre) {
+                      final isFirst = movie.genres.indexOf(genre) == 0;
                       return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.white24,
-                          borderRadius: BorderRadius.circular(20),
+                          color: isFirst ? const Color(0x33FF7EB3) : CupertinoColors.white.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isFirst ? const Color(0x4DFF7EB3) : CupertinoColors.white.withValues(alpha: 0.15),
+                          ),
                         ),
                         child: Text(
-                          genre,
-                          style: const TextStyle(color: Colors.white70, fontSize: 11),
+                          genre.toUpperCase(),
+                          style: TextStyle(
+                            color: isFirst ? const Color(0xFFFF7EB3) : CupertinoColors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
                         ),
                       );
                     }).toList(),
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    movie.overview,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
                 ],
               ),
             ),
@@ -543,7 +895,7 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
     final bool hasMovies = state is MovieDiscoveryLoaded && _currentIndex < _currentMovies.length;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20, top: 10, left: 24, right: 24),
+      padding: const EdgeInsets.only(bottom: 24, top: 12, left: 32, right: 32),
       child: Column(
         children: [
           if (hasMovies)
@@ -552,65 +904,31 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
               children: [
                 // Discard Button
                 _buildRoundButton(
-                  icon: Icons.close,
-                  color: AppColors.error,
+                  icon: CupertinoIcons.clear,
+                  color: AppColors.textMuted,
                   onTap: () => _swiperController.swipe(CardSwiperDirection.left),
+                  size: 64,
                 ),
-                // Play Trailer Button
+                // Play Trailer (Super Like / Play) Button
                 _buildRoundButton(
-                  icon: Icons.play_arrow_rounded,
-                  color: AppColors.accent,
-                  isLarge: true,
+                  icon: CupertinoIcons.play_arrow_solid,
+                  color: const Color(0xFF8A2BE2),
                   onTap: () {
                     final movie = _currentMovies[_currentIndex];
                     _playTrailer(movie.trailerYoutubeId);
                   },
+                  size: 48,
                 ),
-                // Watchlist Button
+                // Watchlist (Like) Button
                 _buildRoundButton(
-                  icon: Icons.favorite,
-                  color: AppColors.primary,
+                  icon: CupertinoIcons.heart_fill,
+                  color: CupertinoColors.white,
                   onTap: () => _swiperController.swipe(CardSwiperDirection.right),
+                  size: 80,
+                  isGradient: true,
                 ),
               ],
             ),
-          const SizedBox(height: 20),
-          // AI Search bar trigger
-          InkWell(
-            onTap: _showMoodSheet,
-            borderRadius: BorderRadius.circular(30),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceElevated.withValues(alpha: 0.7),
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: AppColors.glassBorder),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.auto_awesome, color: AppColors.secondary, size: 20),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text(
-                      'Hôm nay bạn muốn xem gì?',
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Text(
-                      'AI',
-                      style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -620,31 +938,44 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
     required IconData icon,
     required Color color,
     required VoidCallback onTap,
-    bool isLarge = false,
+    required double size,
+    bool isGradient = false,
   }) {
-    final double size = isLarge ? 64 : 54;
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+        color: isGradient ? null : CupertinoColors.white.withValues(alpha: 0.05),
+        gradient: isGradient
+            ? const LinearGradient(
+                colors: [Color(0xFFFF7EB3), Color(0xFF8A2BE2)],
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+              )
+            : null,
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.glassBorder),
+        border: Border.all(
+          color: isGradient ? CupertinoColors.white.withValues(alpha: 0.2) : CupertinoColors.white.withValues(alpha: 0.1),
+        ),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
+          if (isGradient)
+            const BoxShadow(
+              color: Color(0x80FF7EB3),
+              blurRadius: 40,
+            )
+          else
+            BoxShadow(
+              color: CupertinoColors.black.withValues(alpha: 0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            )
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onTap,
-          child: Icon(icon, color: color, size: isLarge ? 32 : 24),
-        ),
+      child: CupertinoButton(
+        padding: EdgeInsets.zero,
+        onPressed: onTap,
+        borderRadius: BorderRadius.circular(size / 2),
+        child: Icon(icon, color: color, size: size * 0.45),
       ),
     );
   }

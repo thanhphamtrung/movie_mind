@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 
 import '../../../../core/theme/app_colors.dart';
 
@@ -7,17 +7,17 @@ class ProfilePlaceholderPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+    return CupertinoPageScaffold(
+      navigationBar: const CupertinoNavigationBar(
+        middle: Text('Profile'),
+        backgroundColor: CupertinoColors.transparent,
+        border: null,
       ),
-      body: Center(
+      child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.person_outline, size: 80, color: AppColors.textSecondary),
+            const Icon(CupertinoIcons.person, size: 80, color: AppColors.textSecondary),
             const SizedBox(height: 24),
             const Text(
               'Your Profile',

@@ -1,5 +1,5 @@
 import 'dart:ui';
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'package:go_router/go_router.dart';
 
@@ -80,13 +80,18 @@ class _MoodInputSheetState extends State<MoodInputSheet> {
               ),
             ),
             const SizedBox(height: 20),
-            TextField(
+            CupertinoTextField(
               controller: _controller,
               maxLines: 3,
               autofocus: true,
-              style: const TextStyle(fontSize: 16),
-              decoration: const InputDecoration(
-                hintText: 'Ví dụ: "Tôi đang hơi buồn và muốn xem một bộ phim trinh thám hack não nhưng kết thúc ấm áp..."',
+              style: const TextStyle(fontSize: 16, color: AppColors.textPrimary),
+              placeholder: 'Ví dụ: "Tôi đang hơi buồn và muốn xem một bộ phim trinh thám hack não nhưng kết thúc ấm áp..."',
+              placeholderStyle: const TextStyle(color: AppColors.textMuted),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceElevated,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.glassBorder, width: 1),
               ),
             ),
             const SizedBox(height: 16),
@@ -107,22 +112,26 @@ class _MoodInputSheetState extends State<MoodInputSheet> {
                 children: _quickMoods.map((mood) {
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
-                    child: ActionChip(
-                      label: Text(
-                        mood,
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 13,
-                        ),
-                      ),
-                      backgroundColor: AppColors.surfaceElevated,
-                      side: const BorderSide(color: AppColors.glassBorder),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
+                    child: CupertinoButton(
+                      padding: EdgeInsets.zero,
                       onPressed: () {
                         _controller.text = mood.substring(2); // strip emoji
                       },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceElevated,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: AppColors.glassBorder),
+                        ),
+                        child: Text(
+                          mood,
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
                     ),
                   );
                 }).toList(),
@@ -132,26 +141,19 @@ class _MoodInputSheetState extends State<MoodInputSheet> {
             SizedBox(
               width: double.infinity,
               height: 54,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  elevation: 4,
-                  shadowColor: AppColors.primary.withValues(alpha: 0.4),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
+              child: CupertinoButton.filled(
+                padding: EdgeInsets.zero,
+                borderRadius: BorderRadius.circular(16),
                 onPressed: () {
                   if (_controller.text.trim().isNotEmpty) {
                     context.pop();
                     widget.onSubmitted(_controller.text.trim());
                   }
                 },
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.auto_awesome, size: 20),
+                  children: const [
+                    Icon(CupertinoIcons.wand_rays, size: 20),
                     SizedBox(width: 8),
                     Text(
                       'AI Tìm Phim Ngay',

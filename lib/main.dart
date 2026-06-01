@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/di/injection.dart' as di;
@@ -29,10 +29,10 @@ class MovieMindApp extends StatelessWidget {
           create: (_) => di.sl<MovieDiscoveryCubit>(),
         ),
       ],
-      child: MaterialApp.router(
+      child: CupertinoApp.router(
         title: 'MovieMind - Mood-based Movie Discovery',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.darkTheme,
+        theme: AppTheme.cupertinoDarkTheme,
         routerConfig: appRouter,
       ),
     );

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -50,10 +50,17 @@ class _WatchlistPageState extends State<WatchlistPage> {
         await launchUrl(webUri, mode: LaunchMode.externalApplication);
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Không thể mở liên kết YouTube!'),
-              backgroundColor: AppColors.error,
+          showCupertinoDialog(
+            context: context,
+            builder: (context) => CupertinoAlertDialog(
+              title: const Text('Lỗi'),
+              content: const Text('Không thể mở liên kết YouTube!'),
+              actions: [
+                CupertinoDialogAction(
+                  child: const Text('OK'),
+                  onPressed: () => Navigator.pop(context),
+                )
+              ],
             ),
           );
         }
@@ -61,14 +68,25 @@ class _WatchlistPageState extends State<WatchlistPage> {
     }
   }
 
+  void _showErrorDialog(String message) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Lỗi'),
+        content: Text(message),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('OK'),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _playTrailer(String? youtubeId) {
     if (youtubeId == null || youtubeId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Không tìm thấy trailer cho phim này!'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      _showErrorDialog('Không tìm thấy trailer cho phim này!');
       return;
     }
 
@@ -80,42 +98,56 @@ class _WatchlistPageState extends State<WatchlistPage> {
       ),
     );
 
-    showDialog(
+    showCupertinoDialog(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.black,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            YoutubePlayer(
-              controller: playerController,
-              showVideoProgressIndicator: true,
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  TextButton.icon(
-                    onPressed: () {
-                      context.pop();
-                      _launchYoutube(youtubeId);
-                    },
-                    icon: const Icon(Icons.open_in_new, color: Colors.amber, size: 16),
-                    label: const Text(
-                      'Xem trên YouTube ↗',
-                      style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () => context.pop(),
-                    child: const Text('Đóng', style: TextStyle(color: Colors.white, fontSize: 13)),
-                  ),
-                ],
+      barrierDismissible: true,
+      builder: (context) => Center(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: CupertinoColors.black,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              YoutubePlayer(
+                controller: playerController,
+                showVideoProgressIndicator: true,
               ),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () {
+                        context.pop();
+                        _launchYoutube(youtubeId);
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(CupertinoIcons.arrow_up_right_square, color: CupertinoColors.systemYellow, size: 16),
+                          SizedBox(width: 4),
+                          Text(
+                            'Xem trên YouTube',
+                            style: TextStyle(color: CupertinoColors.systemYellow, fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () => context.pop(),
+                      child: const Text('Đóng', style: TextStyle(color: CupertinoColors.white, fontSize: 13)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -125,42 +157,44 @@ class _WatchlistPageState extends State<WatchlistPage> {
     setState(() {
       _mockWatchlist.removeWhere((item) => item.id == id);
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Đã gỡ phim khỏi Watchlist'),
-        backgroundColor: AppColors.surfaceElevated,
+    showCupertinoDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Thành công'),
+        content: const Text('Đã gỡ phim khỏi Watchlist'),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('OK'),
+            onPressed: () => Navigator.pop(context),
+          )
+        ],
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return CupertinoPageScaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Danh Sách Lưu'),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Colors.black54, Colors.transparent],
-            ),
-          ),
-        ),
+      navigationBar: CupertinoNavigationBar(
+        middle: const Text('Danh Sách Lưu', style: TextStyle(color: AppColors.textPrimary)),
+        backgroundColor: AppColors.background.withValues(alpha: 0.8),
+        border: const Border(bottom: BorderSide(color: AppColors.glassBorder, width: 0.5)),
       ),
-      body: _mockWatchlist.isEmpty
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(40.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.bookmark_border_rounded,
-                      size: 72,
-                      color: AppColors.textMuted.withValues(alpha: 0.5),
-                    ),
+      child: SafeArea(
+        child: _mockWatchlist.isEmpty
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(40.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        CupertinoIcons.bookmark,
+                        size: 72,
+                        color: AppColors.textMuted.withValues(alpha: 0.5),
+                      ),
                     const SizedBox(height: 20),
                     const Text(
                       'Watchlist Trống',
@@ -190,6 +224,7 @@ class _WatchlistPageState extends State<WatchlistPage> {
                 return _buildWatchlistCard(item);
               },
             ),
+      ),
     );
   }
 
@@ -201,7 +236,7 @@ class _WatchlistPageState extends State<WatchlistPage> {
         border: Border.all(color: AppColors.glassBorder.withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
+            color: CupertinoColors.black.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           )
@@ -220,11 +255,11 @@ class _WatchlistPageState extends State<WatchlistPage> {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
               },
               placeholder: (context, url) => const Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
+                child: CupertinoActivityIndicator(),
               ),
               errorWidget: (context, url, error) => Container(
                 color: AppColors.surfaceElevated,
-                child: const Icon(Icons.movie, size: 50),
+                child: const Icon(CupertinoIcons.film, size: 50),
               ),
             ),
 
@@ -244,7 +279,7 @@ class _WatchlistPageState extends State<WatchlistPage> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.star, color: Colors.amber, size: 12),
+                        const Icon(CupertinoIcons.star_fill, color: CupertinoColors.systemYellow, size: 12),
                         const SizedBox(width: 4),
                         Text(
                           item.rating.toStringAsFixed(1),
@@ -253,14 +288,17 @@ class _WatchlistPageState extends State<WatchlistPage> {
                       ],
                     ),
                   ),
-                  IconButton(
-                    iconSize: 18,
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.black54,
-                      padding: const EdgeInsets.all(4),
-                    ),
-                    icon: const Icon(Icons.delete_outline, color: AppColors.error),
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
                     onPressed: () => _removeItem(item.id),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: CupertinoColors.black.withValues(alpha: 0.54),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(CupertinoIcons.delete, color: AppColors.error, size: 18),
+                    ),
                   ),
                 ],
               ),
@@ -273,11 +311,11 @@ class _WatchlistPageState extends State<WatchlistPage> {
               right: 0,
               child: Container(
                 padding: const EdgeInsets.all(12),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Colors.black87],
+                    colors: [CupertinoColors.transparent, CupertinoColors.black.withValues(alpha: 0.87)],
                   ),
                 ),
                 child: Column(
@@ -291,7 +329,7 @@ class _WatchlistPageState extends State<WatchlistPage> {
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: CupertinoColors.white,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -302,11 +340,11 @@ class _WatchlistPageState extends State<WatchlistPage> {
                           item.releaseYear,
                           style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
                         ),
-                        InkWell(
+                        GestureDetector(
                           onTap: () => _playTrailer(item.trailerYoutubeId),
                           child: const Row(
                             children: [
-                              Icon(Icons.play_circle_fill, color: AppColors.accent, size: 16),
+                              Icon(CupertinoIcons.play_circle_fill, color: AppColors.accent, size: 16),
                               SizedBox(width: 4),
                               Text(
                                 'Trailer',
