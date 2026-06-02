@@ -34,3 +34,16 @@ class MovieDiscoveryError extends MovieDiscoveryState {
   @override
   List<Object?> get props => [message];
 }
+
+class MovieDiscoveryPromptGenerating extends MovieDiscoveryState {
+  const MovieDiscoveryPromptGenerating();
+}
+
+class MovieDiscoveryPromptGenerated extends MovieDiscoveryState {
+  final String newPrompt;
+
+  const MovieDiscoveryPromptGenerated(this.newPrompt);
+
+  @override
+  List<Object?> get props => [newPrompt];
+}

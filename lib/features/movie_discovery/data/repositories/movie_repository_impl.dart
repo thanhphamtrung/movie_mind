@@ -21,4 +21,15 @@ class MovieRepositoryImpl implements MovieRepository {
       return FailureResult(ServerFailure(e.toString()));
     }
   }
+  @override
+  Future<Result<String, Failure>> generatePromptWithFilter(String currentPrompt, Map<String, dynamic> filters) async {
+    try {
+      final generatedPrompt = await remoteDataSource.generatePromptWithFilter(currentPrompt, filters);
+      return Success(generatedPrompt);
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    } catch (e) {
+      return FailureResult(ServerFailure(e.toString()));
+    }
+  }
 }

@@ -10,6 +10,7 @@ class MovieModel extends Movie {
     required super.releaseYear,
     required super.genres,
     super.trailerYoutubeId,
+    super.reason,
   });
 
   factory MovieModel.fromJson(Map<String, dynamic> json) {
@@ -22,6 +23,7 @@ class MovieModel extends Movie {
       releaseYear: json['releaseYear'] as String,
       genres: List<String>.from(json['genres'] as List),
       trailerYoutubeId: json['trailerYoutubeId'] as String?,
+      reason: json['reason'] as String? ?? '',
     );
   }
 
@@ -35,6 +37,7 @@ class MovieModel extends Movie {
       'releaseYear': releaseYear,
       'genres': genres,
       'trailerYoutubeId': trailerYoutubeId,
+      'reason': reason,
     };
   }
 
@@ -47,6 +50,7 @@ class MovieModel extends Movie {
     String? releaseYear,
     List<String>? genres,
     String? trailerYoutubeId,
+    String? reason,
   }) {
     return MovieModel(
       id: id ?? this.id,
@@ -57,6 +61,7 @@ class MovieModel extends Movie {
       releaseYear: releaseYear ?? this.releaseYear,
       genres: genres ?? this.genres,
       trailerYoutubeId: trailerYoutubeId ?? this.trailerYoutubeId,
+      reason: reason ?? this.reason,
     );
   }
 }

@@ -46,11 +46,14 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
     context.read<MovieDiscoveryCubit>().reset();
   }
 
-  void _showFilterSheet() {
-    showCupertinoModalPopup(
+  Future<void> _showFilterSheet() async {
+    final result = await showCupertinoModalPopup<Map<String, dynamic>>(
       context: context,
       builder: (context) => const FilterBottomSheet(),
     );
+    if (result != null && mounted) {
+      context.read<MovieDiscoveryCubit>().generatePrompt(_moodController.text, result);
+    }
   }
 
   Future<void> _launchYoutube(String youtubeId) async {
@@ -188,6 +191,8 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
               _currentMovies = state.movies;
               _currentIndex = 0;
             });
+          } else if (state is MovieDiscoveryPromptGenerated) {
+            _moodController.text = state.newPrompt;
           }
         },
         builder: (context, state) {
@@ -336,7 +341,7 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
   }
 
   Widget _buildMainContent(MovieDiscoveryState state) {
-    if (state is MovieDiscoveryInitial) {
+    if (state is MovieDiscoveryInitial || state is MovieDiscoveryPromptGenerating || state is MovieDiscoveryPromptGenerated) {
       return SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
         physics: const BouncingScrollPhysics(),
@@ -392,7 +397,9 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
                     maxLines: 3,
                     minLines: 3,
                     style: const TextStyle(fontSize: 15, color: CupertinoColors.white),
-                    placeholder: 'VD: Tôi muốn xem một phim trinh thám hại não có kết thúc ấm áp...',
+                    placeholder: state is MovieDiscoveryPromptGenerating 
+                        ? 'AI đang tạo mô tả...' 
+                        : 'VD: Tôi muốn xem một phim trinh thám hại não có kết thúc ấm áp...',
                     placeholderStyle: const TextStyle(color: AppColors.textMuted, fontSize: 15),
                     decoration: const BoxDecoration(color: CupertinoColors.transparent),
                   ),
@@ -788,7 +795,9 @@ class _MovieSwipePageState extends State<MovieSwipePage> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Bộ phim này hoàn toàn khớp với tâm trạng của bạn dựa trên đánh giá sâu sắc về ${movie.genres.take(2).join(', ')}.',
+                            movie.reason.isNotEmpty 
+                                ? movie.reason 
+                                : 'Bộ phim này hoàn toàn khớp với tâm trạng của bạn dựa trên đánh giá sâu sắc về ${movie.genres.take(2).join(', ')}.',
                             style: const TextStyle(
                               color: CupertinoColors.white,
                               fontSize: 12,

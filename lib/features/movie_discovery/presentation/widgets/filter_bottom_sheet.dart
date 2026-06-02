@@ -256,7 +256,11 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               ),
               child: CupertinoButton(
                 padding: EdgeInsets.zero,
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => Navigator.pop(context, {
+                  'format': _selectedFormat,
+                  'genres': _selectedGenres,
+                  'country': _selectedCountry,
+                }),
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 16),

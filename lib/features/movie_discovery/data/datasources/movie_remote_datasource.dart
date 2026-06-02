@@ -8,6 +8,7 @@ import '../models/movie_model.dart';
 
 abstract class MovieRemoteDataSource {
   Future<List<MovieModel>> getRecommendations(String moodPrompt);
+  Future<String> generatePromptWithFilter(String currentPrompt, Map<String, dynamic> filters);
 }
 
 class MovieRemoteDataSourceImpl implements MovieRemoteDataSource {
@@ -74,6 +75,7 @@ class MovieRemoteDataSourceImpl implements MovieRemoteDataSource {
         }
 
         final trailerYoutubeId = item['trailerYoutubeId']?.toString();
+        final reason = item['reason']?.toString() ?? 'Phim này rất phù hợp với tâm trạng của bạn dựa trên thể loại ${genres.take(2).join(', ')}.';
 
         String posterUrl = item['posterUrl']?.toString() ?? '';
         if (posterUrl.contains('themoviedb.org') ||
@@ -104,6 +106,7 @@ class MovieRemoteDataSourceImpl implements MovieRemoteDataSource {
             releaseYear: releaseYear,
             genres: genres,
             trailerYoutubeId: trailerYoutubeId,
+            reason: reason,
           ),
           originalTitle,
         ));
@@ -354,7 +357,8 @@ class MovieRemoteDataSourceImpl implements MovieRemoteDataSource {
             '- rating (number from 1.0 to 10.0)\n'
             '- releaseYear (string, e.g. "2010")\n'
             '- genres (list of strings in Vietnamese, e.g., ["Hành Động", "Viễn Tưởng"])\n'
-            '- trailerYoutubeId (optional string)\n\n'
+            '- trailerYoutubeId (optional string)\n'
+            '- reason (string, a short and persuasive explanation in Vietnamese of why this movie matches the user\'s mood prompt)\n\n'
             'Strict rules for "posterUrl":\n'
             '1. For very famous/popular movies (e.g. Inception, Interstellar, Coco, etc.), you can provide the exact, valid TMDB poster image URL (e.g., `https://image.tmdb.org/t/p/w500/edv5CZvX0jOKJsvSVgGEj7VjQ5L.jpg`).\n'
             '2. If you do not know the exact, real TMDB poster path (especially for local/Vietnamese movies or less popular ones), you MUST set "posterUrl" to the string "placeholder". Do NOT generate or guess TMDB or Unsplash search URLs because they will 404. Our app will automatically apply a premium movie-matched poster fallback for you.\n\n'
@@ -492,6 +496,62 @@ class MovieRemoteDataSourceImpl implements MovieRemoteDataSource {
     }
   }
 
+  @override
+  Future<String> generatePromptWithFilter(String currentPrompt, Map<String, dynamic> filters) async {
+    if (_generativeModel == null) {
+      return _generateMockPrompt(currentPrompt, filters);
+    }
+    
+    try {
+      final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
+      if (apiKey.isEmpty || apiKey == 'mock_key_here') {
+        return _generateMockPrompt(currentPrompt, filters);
+      }
+
+      final format = filters['format']?.toString() ?? '';
+      final genres = (filters['genres'] as List<String>?)?.join(', ') ?? '';
+      final country = filters['country']?.toString() ?? '';
+
+      final isUpdate = currentPrompt.trim().isNotEmpty;
+      
+      final promptText = isUpdate
+          ? 'Bạn là một trợ lý AI gợi ý phim. Người dùng đã nhập yêu cầu hiện tại: "$currentPrompt". '
+            'Họ vừa áp dụng thêm các bộ lọc: Định dạng: $format, Thể loại: $genres, Quốc gia: $country. '
+            'Hãy viết lại yêu cầu hiện tại sao cho kết hợp tự nhiên với các bộ lọc mới (khoảng 1-2 câu). Trả về đúng nội dung câu mô tả được viết lại, không thêm lời chào, dấu ngoặc kép hay giải thích.'
+          : 'Bạn là một trợ lý AI gợi ý phim. Người dùng vừa chọn các bộ lọc: Định dạng: $format, Thể loại: $genres, Quốc gia: $country. '
+            'Hãy tạo một đoạn mô tả tâm trạng ngắn gọn (1-2 câu) dựa trên các bộ lọc này để điền vào ô tìm kiếm. '
+            'Ví dụ: "Tôi muốn xem một bộ phim lẻ thể loại Viễn tưởng, Hành động của Mỹ." '
+            'Trả về đúng nội dung câu mô tả, không thêm lời chào, dấu ngoặc kép hay giải thích.';
+
+      final response = await _generativeModel.generateContent([
+        Content.text(promptText),
+      ]);
+
+      final generatedText = response.text?.trim() ?? '';
+      if (generatedText.isNotEmpty) {
+        // Loại bỏ dấu nháy kép ở đầu và cuối nếu AI tự thêm vào
+        return generatedText.replaceAll(RegExp(r'^"|"$'), '').trim();
+      }
+      return _generateMockPrompt(currentPrompt, filters);
+    } catch (e) {
+      debugPrint('[MovieRemoteDataSourceImpl] Error generating prompt: $e');
+      return _generateMockPrompt(currentPrompt, filters);
+    }
+  }
+
+  String _generateMockPrompt(String currentPrompt, Map<String, dynamic> filters) {
+    final format = filters['format']?.toString() ?? '';
+    final genres = (filters['genres'] as List<String>?)?.join(', ') ?? '';
+    final country = filters['country']?.toString() ?? '';
+    final filterStr = '$format thể loại $genres của $country';
+
+    if (currentPrompt.trim().isNotEmpty) {
+      return '$currentPrompt (Thêm tiêu chí: $filterStr)';
+    } else {
+      return 'Tôi muốn xem một bộ $filterStr.';
+    }
+  }
+
   // Pre-configured premium cinematic collections
   static const List<MovieModel> _mysteryMoodMovies = [
     MovieModel(
@@ -505,6 +565,7 @@ class MovieRemoteDataSourceImpl implements MovieRemoteDataSource {
       releaseYear: '2019',
       genres: ['Mystery', 'Comedy', 'Drama'],
       trailerYoutubeId: 'qGqiHJTsRkQ',
+      reason: 'Cốt truyện thắt nút và mở nút liên tục sẽ khiến bạn phải vận dụng tối đa trí não.',
     ),
     MovieModel(
       id: 'm2',
@@ -517,6 +578,7 @@ class MovieRemoteDataSourceImpl implements MovieRemoteDataSource {
       releaseYear: '2010',
       genres: ['Mystery', 'Thriller'],
       trailerYoutubeId: '5iaYLCip5vg',
+      reason: 'Một bộ phim tâm lý vặn xoắn đỉnh cao, mang lại cảm giác căng thẳng tột độ.',
     ),
     MovieModel(
       id: 'm3',
@@ -529,6 +591,7 @@ class MovieRemoteDataSourceImpl implements MovieRemoteDataSource {
       releaseYear: '2014',
       genres: ['Sci-Fi', 'Adventure', 'Drama'],
       trailerYoutubeId: 'zSWdZVtXT7E',
+      reason: 'Sự vĩ đại của không gian kết hợp với tình cảm gia đình sâu sắc.',
     ),
   ];
 
@@ -544,6 +607,7 @@ class MovieRemoteDataSourceImpl implements MovieRemoteDataSource {
       releaseYear: '2006',
       genres: ['Drama', 'Biography'],
       trailerYoutubeId: 'DMOBlEcRuw8',
+      reason: 'Câu chuyện truyền cảm hứng sẽ khiến bạn rơi nước mắt và trân trọng cuộc sống hơn.',
     ),
     MovieModel(
       id: 's2',
@@ -556,6 +620,7 @@ class MovieRemoteDataSourceImpl implements MovieRemoteDataSource {
       releaseYear: '2017',
       genres: ['Animation', 'Family', 'Fantasy'],
       trailerYoutubeId: 'Rvr68u6k5sI',
+      reason: 'Giai điệu âm nhạc và tình cảm gia đình vượt qua ranh giới của sự sống và cái chết.',
     ),
   ];
 
@@ -571,6 +636,7 @@ class MovieRemoteDataSourceImpl implements MovieRemoteDataSource {
       releaseYear: '2021',
       genres: ['Action', 'Comedy', 'Sci-Fi'],
       trailerYoutubeId: 'X2m-08c37fc',
+      reason: 'Những tràng cười sảng khoái với ý tưởng độc đáo và kỹ xảo mãn nhãn.',
     ),
     MovieModel(
       id: 'c2',
@@ -583,6 +649,7 @@ class MovieRemoteDataSourceImpl implements MovieRemoteDataSource {
       releaseYear: '2014',
       genres: ['Comedy', 'Drama'],
       trailerYoutubeId: '1Fg5iWmQjwk',
+      reason: 'Phong cách nghệ thuật đặc biệt và hài hước duyên dáng.',
     ),
   ];
 
@@ -598,6 +665,7 @@ class MovieRemoteDataSourceImpl implements MovieRemoteDataSource {
       releaseYear: '2010',
       genres: ['Action', 'Sci-Fi', 'Adventure'],
       trailerYoutubeId: 'YoHD9XEInc0',
+      reason: 'Chuyến phiêu lưu vào tiềm thức đầy bất ngờ và kịch tính.',
     ),
     MovieModel(
       id: 'g2',
@@ -610,6 +678,7 @@ class MovieRemoteDataSourceImpl implements MovieRemoteDataSource {
       releaseYear: '2001',
       genres: ['Animation', 'Adventure', 'Fantasy'],
       trailerYoutubeId: 'ByXuk9QqQkk',
+      reason: 'Hành trình diệu kỳ vượt khỏi trí tưởng tượng của Ghibli.',
     ),
   ];
 }

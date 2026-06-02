@@ -9,6 +9,7 @@ import '../../features/movie_discovery/data/datasources/movie_remote_datasource.
 import '../../features/movie_discovery/data/repositories/movie_repository_impl.dart';
 import '../../features/movie_discovery/domain/repositories/movie_repository.dart';
 import '../../features/movie_discovery/domain/usecases/get_recommendations.dart';
+import '../../features/movie_discovery/domain/usecases/generate_prompt_with_filter.dart';
 import '../../features/movie_discovery/presentation/bloc/movie_discovery_cubit.dart';
 
 final sl = GetIt.instance;
@@ -43,7 +44,11 @@ Future<void> init() async {
 
   // Use Cases
   sl.registerLazySingleton(() => GetRecommendations(sl()));
+  sl.registerLazySingleton(() => GeneratePromptWithFilter(sl()));
 
   // Blocs / Cubits
-  sl.registerFactory(() => MovieDiscoveryCubit(getRecommendations: sl()));
+  sl.registerFactory(() => MovieDiscoveryCubit(
+    getRecommendations: sl(),
+    generatePromptWithFilterUseCase: sl(),
+  ));
 }

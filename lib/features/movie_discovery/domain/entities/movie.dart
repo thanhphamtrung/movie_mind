@@ -9,6 +9,7 @@ class Movie extends Equatable {
   final String releaseYear;
   final List<String> genres;
   final String? trailerYoutubeId;
+  final String reason;
 
   const Movie({
     required this.id,
@@ -19,6 +20,7 @@ class Movie extends Equatable {
     required this.releaseYear,
     required this.genres,
     this.trailerYoutubeId,
+    this.reason = '',
   });
 
   @override
@@ -31,5 +33,6 @@ class Movie extends Equatable {
         releaseYear,
         genres,
         trailerYoutubeId,
+        reason,
       ];
 }
